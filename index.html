@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Multi-Mode Calculator</title>
+  <style>
+     body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        transition: 0.4s;
+        background: #f2f2f2;
+    }
+
+    /* CONTAINER */
+    .calculator-container {
+        width: 360px;
+        margin: 30px auto;
+        padding: 20px;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0px 6px 20px rgba(0,0,0,0.15);
+        transition: 0.4s;
+    }
+
+    /* THEME BUTTONS */
+    .theme-selector, .mode-selector {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+
+    /* DISPLAY */
+    #display {
+        width: 100%;
+        height: 60px;
+        border: none;
+        margin-bottom: 15px;
+        border-radius: 10px;
+        background: #000;
+        color: #0f0;
+        font-size: 28px;
+        padding: 10px;
+        text-align: right;
+        outline: none;
+        transition: 0.4s;
+    }
+
+    /* BUTTON GRID */
+    .buttons {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 10px;
+    }
+
+    button {
+        padding: 18px;
+        border-radius: 10px;
+        font-size: 18px;
+        border: none;
+        transition: 0.2s ease;
+        cursor: pointer;
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+    }
+
+    button:active {
+        transform: scale(0.92);
+    }
+
+    /* THEMES */
+    .light { background:#ffffff; color:#000; }
+    .dark { background:#1c1c1c; color:#fff; }
+    .high-contrast { background:#000; color:#ff0; }
+
+    .theme-blue { background:#e8f1ff; }
+    .theme-green { background:#e7fce8; }
+    .theme-gold  { background:#fff7d1; }
+
+    .dark #display { background:#222; color:#0f0; }
+    .high-contrast #display { background:#000; color:#ff0; }
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa7b2; --accent:#06b6d4; --btn:#121826;
+      --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background: linear-gradient(180deg,#071020 0%, #081826 60%); color:#e6eef3;}
+    .wrap{width:100%; max-width:980px; padding:20px;}
+    header{display:flex; gap:16px; align-items:center; margin-bottom:12px;}
+    header h1{font-size:20px; margin:0; font-weight:600}
+    .modes{display:flex; gap:8px; flex-wrap:wrap;}
+    .mode-btn{background:var(--btn); border-radius:8px; padding:8px 12px; color:var(--muted); border:1px solid rgba(255,255,255,0.04);
+      cursor:pointer; font-weight:600; transition:all .15s}
+    .mode-btn.active{background:linear-gradient(90deg, rgba(6,182,212,0.12), rgba(96,165,250,0.06)); color:#dff7fb; box-shadow:0 6px 18px rgba(3,6,23,0.6)}
+    .panel{display:grid; grid-template-columns: 1fr 380px; gap:18px; align-items:start;}
+    @media (max-width:980px){ .panel{grid-template-columns: 1fr; } .right-col{order:2} }
+    .calculator-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:18px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);}
+    .display{background:var(--glass); padding:14px; border-radius:10px; margin-bottom:12px; display:flex;flex-direction:column; gap:8px;}
+    .display .top{display:flex; justify-content:space-between; align-items:center;}
+    .mode-label{font-size:13px; color:var(--muted);}
+    .expr{font-size:14px; color:var(--muted); min-height:18px; word-break:break-all;}
+    .output{font-size:28px; font-weight:700; color:#f8fbff; min-height:36px; text-align:right;}
+    .kbd{display:grid; grid-template-columns: repeat(4,1fr); gap:8px;}
+    .key{background:#071226; border-radius:8px; padding:14px 8px; text-align:center; cursor:pointer; user-select:none; border:1px solid rgba(255,255,255,0.03); font-weight:700;}
+    .key.func{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); color:var(--muted); font-weight:600}
+    .key.equal{grid-column:span 2; background:linear-gradient(90deg,#06b6d4,#60a5fa); color:#021019;}
+    .actions{display:flex; gap:8px; margin-bottom:8px;}
+    .small-btn{background:transparent; border:1px solid rgba(255,255,255,0.04); padding:8px 10px; border-radius:8px; color:var(--muted); cursor:pointer}
+    .history{margin-top:12px; max-height:150px; overflow:auto; font-size:13px; color:var(--muted); background:rgba(255,255,255,0.01); border-radius:8px; padding:10px}
+    .right-col .card{margin-bottom:12px}
+    label.input-row{display:flex; gap:8px; align-items:center; margin-bottom:8px}
+    input[type="text"], input[type="number"]{width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:#e7f6fb}
+    .result-aux{background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; margin-top:8px}
+    footer.small{font-size:12px; color:var(--muted); margin-top:12px}
+    /* tiny responsive */
+    @media (max-width:520px){ .kbd{grid-template-columns:repeat(4,1fr);} .key{padding:12px 6px} .panel{gap:10px} }
+    /* THEME BUTTONS */
+    .theme-selector, .mode-selector {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    /* THEMES */
+    .light { background:#ffffff; color:#000; }
+    .dark { background:#1c1c1c; color:#fff; }
+    .high-contrast { background:#000; color:#ff0; }
+
+    .theme-blue { background:#e8f1ff; }
+    .theme-green { background:#e7fce8; }
+    .theme-gold  { background:#fff7d1; }
+
+    .dark #display { background:#222; color:#0f0; }
+    .high-contrast #display { background:#000; color:#ff0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Multi-Mode Calculator</h1>
+      <div class="modes" id="modes"></div>
+    </header>
+
+    <div class="panel">
+      <div class="calculator-card">
+        <div class="display">
+          <div class="top">
+            <div class="mode-label" id="currentModeLabel">Mode: Standard</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="small-btn" id="toggleSign">±</button>
+              <button class="small-btn" id="backspace">⌫</button>
+              <button class="small-btn" id="clear">AC</button>
+            </div>
+          </div>
+          <div class="expr" id="expr"> </div>
+          <div class="output" id="output">0</div>
+        </div>
+
+        <div id="controls"></div>
+          <!-- THEME SELECTOR -->
+       <div>
+    <select class="theme-selector" id="themeSelect">
+        <option value="light">Light Mode</option>
+        <option value="dark">Dark Mode</option>
+        <option value="high-contrast">High Contrast</option>
+        <option value="theme-blue">Blue Theme</option>
+        <option value="theme-green">Green Theme</option>
+        <option value="theme-gold">Gold Theme</option>
+    </select>
+      </div>
+        <div class="history" id="history" aria-live="polite">
+          <strong>History</strong>
+          <div id="historyList"></div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <!-- Business / Educational / Programmer extra panes -->
+        <div class="calculator-card card" id="rightPane">
+          <strong id="rightTitle">Tools</strong>
+          <div id="rightContent" style="margin-top:8px">
+            <div class="result-aux">Choose a mode to view specialized tools.</div>
+          </div>
+        </div>
+
+        <div class="calculator-card card">
+          <strong>Keyboard Tips</strong>
+          <div style="margin-top:8px; color:var(--muted); font-size:13px">
+            Use numbers, + - * / ( ) .  . Press Enter for equals. In Scientific mode you can use:
+            <code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code>, <code>ln(x)</code>, <code>log(x)</code>, <code>sqrt(x)</code>, <code>^</code>.
+          </div>
+        </div>
+
+        <div class="calculator-card card">
+          <strong>About</strong>
+          <div style="margin-top:8px; color:var(--muted); font-size:13px">
+            This calculator sanitizes input and maps known functions to JavaScript <code>Math</code> equivalents.
+            It supports quick finance calculations and simple step-by-step explanation in Educational mode.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <footer class="small">Built for demonstration • Responsive • Keyboard-enabled</footer>
+  </div>
+
+<script>
+/* ---------- MODE CONFIG ---------- */
+const MODES = [
+  {id:'standard', label:'Standard'},
+  {id:'scientific', label:'Scientific'},
+  {id:'business', label:'Business'},
+  {id:'educational', label:'Educational'},
+  {id:'programmer', label:'Programmer'}
+];
+
+const modeButtonsContainer = document.getElementById('modes');
+const currentModeLabel = document.getElementById('currentModeLabel');
+const controls = document.getElementById('controls');
+const exprEl = document.getElementById('expr');
+const outputEl = document.getElementById('output');
+const historyList = document.getElementById('historyList');
+const rightContent = document.getElementById('rightContent');
+const rightTitle = document.getElementById('rightTitle');
+
+let history = [];
+let expr = '';
+let currentMode = 'standard';
+
+/* ---------- UI: render mode buttons ---------- */
+MODES.forEach(m=>{
+  const b = document.createElement('button');
+  b.className = 'mode-btn' + (m.id===currentMode ? ' active' : '');
+  b.textContent = m.label;
+  b.onclick = ()=>setMode(m.id);
+  modeButtonsContainer.appendChild(b);
+});
+
+/* ---------- Mode Switching ---------- */
+function setMode(mode){
+  currentMode = mode;
+  // update active class
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.textContent.toLowerCase()===mode);
+  });
+  currentModeLabel.textContent = 'Mode: ' + MODES.find(m=>m.id===mode).label;
+  renderControlsForMode(mode);
+  renderRightPane(mode);
+  clearAll(false);
+}
+
+/* ---------- Clear / Backspace / sign toggle ---------- */
+document.getElementById('clear').addEventListener('click', ()=>clearAll(true));
+document.getElementById('backspace').addEventListener('click', ()=>{ expr = expr.slice(0,-1); renderExpr(); });
+document.getElementById('toggleSign').addEventListener('click', ()=>{
+  // toggle leading sign of the last number
+  expr = expr.replace(/([0-9.]+)$/, (m)=> (m.startsWith('-') ? m.slice(1) : '-' + m));
+  renderExpr();
+});
+
+/* ---------- Render expression/output/history ---------- */
+function renderExpr(){ exprEl.textContent = expr || ' '; }
+function renderOutput(text){ outputEl.textContent = text ?? '0'; }
+function pushHistory(input, result){
+  history.unshift({input, result});
+  if(history.length>20) history.pop();
+  updateHistoryUI();
+}
+function updateHistoryUI(){
+  historyList.innerHTML = '';
+  history.forEach(h=>{
+    const d = document.createElement('div');
+    d.style.padding='6px 0';
+    d.innerHTML = `<div style="color:var(--muted); font-size:13px">${escapeHtml(h.input)}</div><div style="font-weight:700">${escapeHtml(h.result)}</div>`;
+    historyList.appendChild(d);
+  });
+}
+
+/* ---------- Controls per mode ---------- */
+function renderControlsForMode(mode){
+  controls.innerHTML = '';
+  if(mode === 'standard'){
+    renderKeypad(['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+']);
+  } else if(mode === 'scientific'){
+    renderScientific();
+  } else if(mode === 'business'){
+    renderStandardWithExtras(['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'], ['%,','nCr','nPr']);
+  } else if(mode === 'educational'){
+    renderStandardWithExtras(['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'], ['step']);
+  } else if(mode === 'programmer'){
+    renderProgrammer();
+  }
+}
+
+/* ---------- Helpers to generate UI ---------- */
+function renderKeypad(keys){
+  const kbd = document.createElement('div');
+  kbd.className = 'kbd';
+  keys.forEach(k=>{
+    const but = document.createElement('div');
+    but.className = 'key' + (k==='='? ' equal' : (isNaN(k) && k.length>1 ? ' func' : (['/','*','-','+','.'].includes(k)?' func':'')));
+    but.textContent = k;
+    but.onclick = ()=>onButtonPress(k);
+    kbd.appendChild(but);
+  });
+  controls.appendChild(kbd);
+}
+
+function renderStandardWithExtras(keys, extras){
+  renderKeypad(keys);
+  const row = document.createElement('div'); row.style.marginTop='10px'; row.style.display='flex'; row.style.gap='8px';
+  extras.forEach(e=>{
+    const b=document.createElement('button'); b.className='small-btn'; b.textContent=e;
+    b.onclick = ()=>onSpecial(e);
+    row.appendChild(b);
+  });
+  controls.appendChild(row);
+}
+
+function renderScientific(){
+  const scientificKeys = [
+    'sin(','cos(','tan(','^','sqrt(','(',')', 'C',
+    '7','8','9','/','ln(','log(','e^(','pi',
+    '4','5','6','*','x^2','x^3','^3','%',
+    '1','2','3','-','(',')','Ans','=',
+    '0','.','+','--','--','--','--','='
+  ];
+  // tailored layout: functions + numeric keypad
+  const funcRow = document.createElement('div'); funcRow.style.display='flex'; funcRow.style.gap='8px'; funcRow.style.flexWrap='wrap';
+  const funcs = ['sin(','cos(','tan(','ln(','log(','sqrt(','^','pi','e^('];
+  funcs.forEach(f=>{
+    const b=document.createElement('button'); b.className='small-btn'; b.textContent=f.replace('(','(');
+    b.onclick=()=>onButtonPress(f);
+    funcRow.appendChild(b);
+  });
+  controls.appendChild(funcRow);
+
+  // numeric grid
+  renderKeypad(['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+']);
+}
+
+function renderProgrammer(){
+  // top tools: base converters
+  const toolRow = document.createElement('div'); toolRow.style.display='flex'; toolRow.style.gap='8px'; toolRow.style.marginBottom='8px';
+  const bins = ['BIN','OCT','DEC','HEX'];
+  bins.forEach(b=>{
+    const btn = document.createElement('button'); btn.className='small-btn'; btn.textContent=b;
+    btn.onclick=()=>convertBase(b.toLowerCase());
+    toolRow.appendChild(btn);
+  });
+  controls.appendChild(toolRow);
+
+  // bitwise keys
+  const bitRow = document.createElement('div'); bitRow.style.display='flex'; bitRow.style.gap='8px'; bitRow.style.marginBottom='8px';
+  ['&','|','^','~','<<','>>'].forEach(b=>{
+    const btn = document.createElement('button'); btn.className='small-btn'; btn.textContent=b;
+    btn.onclick=()=>onButtonPress(b);
+    bitRow.appendChild(btn);
+  });
+  controls.appendChild(bitRow);
+
+  // numeric keypad restricted to hex + operators
+  renderKeypad(['A','B','C','D','E','F','7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+']);
+}
+
+/* ---------- Right pane content for specialized modes ---------- */
+function renderRightPane(mode){
+  rightContent.innerHTML = '';
+  rightTitle.textContent = 'Tools';
+  if(mode==='business'){
+    rightTitle.textContent = 'Business / Finance Tools';
+    rightContent.innerHTML = `
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Quick calculators</div>
+      <label class="input-row"><div style="width:110px">Principal (P)</div><input type="number" id="fiP" placeholder="principal"/></label>
+      <label class="input-row"><div style="width:110px">Rate (% p.a.)</div><input type="number" id="fiR" placeholder="rate"/></label>
+      <label class="input-row"><div style="width:110px">Years (t)</div><input type="number" id="fiT" placeholder="years"/></label>
+      <div style="display:flex;gap:8px">
+        <button class="small-btn" id="calcSimple">Simple Interest</button>
+        <button class="small-btn" id="calcCompound">Compound Interest</button>
+        <button class="small-btn" id="calcLoan">Loan (monthly payment)</button>
+      </div>
+      <div id="fiResult" class="result-aux" style="margin-top:10px"></div>
+    `;
+    document.getElementById('calcSimple').onclick = calcSimpleInterest;
+    document.getElementById('calcCompound').onclick = calcCompoundInterest;
+    document.getElementById('calcLoan').onclick = calcLoanPayment;
+  } else if(mode==='educational'){
+    rightTitle.textContent = 'Educational Help';
+    rightContent.innerHTML = `
+      <div style="font-size:13px;color:var(--muted)">Enter an expression and press "=" in the main calculator. This pane shows a step-by-step simplification for basic arithmetic expressions:</div>
+      <div class="result-aux" id="eduSteps">No steps yet.</div>
+    `;
+  } else if(mode==='programmer'){
+    rightTitle.textContent = 'Programmer Tools';
+    rightContent.innerHTML = `
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Enter a value then click a base button (BIN/OCT/DEC/HEX).</div>
+      <div class="result-aux" id="progBases">No conversion yet.</div>
+    `;
+  } else {
+    rightContent.innerHTML = `<div class="result-aux">Choose a specialized mode to see tools.</div>`;
+  }
+}
+
+/* ---------- Operations & evaluation ---------- */
+
+/*
+  Safe evaluate:
+  - allow only characters: digits, operators + - * / % ^ . parentheses , letters (for function names)
+  - map: sin,cos,tan,asin,acos,atan,ln,log,sqrt,pi,e,pow -> Math.* equivalents
+  - replace ^ with ** (ES2016 pow). If unsupported, fallback to Math.pow replacement.
+*/
+const ALLOWED_RE = /^[0-9+\-*/%^()., \tA-Za-z_<>|&~]+$/;
+const FUNC_MAP = {
+  'sin(': 'Math.sin(',
+  'cos(': 'Math.cos(',
+  'tan(': 'Math.tan(',
+  'asin(': 'Math.asin(',
+  'acos(': 'Math.acos(',
+  'atan(': 'Math.atan(',
+  'ln(': 'Math.log(',
+  'log(': 'Math.log10 ? Math.log10(',
+  'sqrt(': 'Math.sqrt(',
+  'abs(': 'Math.abs(',
+  'floor(': 'Math.floor(',
+  'ceil(': 'Math.ceil(',
+  'round(': 'Math.round(',
+  'pi': 'Math.PI',
+  'e': 'Math.E',
+  'pow(': 'Math.pow('
+};
+
+function sanitizeExpression(input){
+  input = input.replace(/\s+/g, ''); // remove whitespace
+  // Basic safety: allowed characters only
+  if(!ALLOWED_RE.test(input)) throw new Error('Invalid characters in expression');
+  // replace common function names with Math.*
+  Object.keys(FUNC_MAP).forEach(k=>{
+    // replace all occurrences (but keep parentheses etc)
+    input = input.split(k).join(FUNC_MAP[k]);
+  });
+  // ^ -> ** (if exists)
+  input = input.replace(/\^/g, '**');
+  // protect multiple consecutive operators like "++" (not always illegal), let JS engine handle
+  return input;
+}
+
+function evaluateExpression(input){
+  if(!input) return '0';
+  const sanitized = sanitizeExpression(input);
+  // further guard: prevent access to constructor/prototype by forbidding 'constructor' or '__proto__'
+  if(/constructor|prototype|__proto__/.test(sanitized)) throw new Error('Forbidden token');
+  // evaluate using Function
+  try{
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('return (' + sanitized + ')');
+    const result = fn();
+    if(result === Infinity || result === -Infinity) throw new Error('Overflow / divide by zero');
+    if(Number.isNaN(result)) throw new Error('Invalid calculation');
+    // format large/small numbers
+    return (typeof result === 'number' && Math.abs(result) > 1e12) ? result.toExponential(6) : result;
+  } catch(e){
+    // fallback: try Math.pow replacement for ** in older engines
+    try{
+      const fallback = sanitized.replace(/\*\*/g, 'Math.pow');
+      const fn2 = new Function('return (' + fallback + ')');
+      return fn2();
+    } catch(err){
+      throw new Error('Evaluation error');
+    }
+  }
+}
+
+/* ---------- Button handling ---------- */
+function onButtonPress(k){
+  if(k === '='){
+    try{
+      const res = evaluateExpression(expr);
+      renderOutput(String(res));
+      pushHistory(expr, String(res));
+      if(currentMode==='educational') showEducationalSteps(expr, res);
+      expr = String(res); // set result as next expression
+      renderExpr();
+    } catch(e){
+      renderOutput('Error');
+      pushHistory(expr, 'Error: ' + e.message);
+    }
+    return;
+  }
+  if(k === 'C' || k === 'AC') { expr=''; renderExpr(); renderOutput('0'); return; }
+  // replace some display-friendly tokens if needed
+  expr += k;
+  renderExpr();
+}
+
+function onSpecial(cmd){
+  if(cmd === 'step'){
+    // compute and show steps for simple expressions
+    try{
+      const res = evaluateExpression(expr);
+      showEducationalSteps(expr, res);
+      renderOutput(String(res));
+      pushHistory(expr, String(res));
+      expr = String(res);
+      renderExpr();
+    } catch(e){
+      renderOutput('Error');
+      pushHistory(expr, 'Error: ' + e.message);
+    }
+  } else {
+    // placeholder for other extras
+    alert('Special: ' + cmd);
+  }
+}
+
+/* ---------- Business functions ---------- */
+function calcSimpleInterest(){
+  const P = parseFloat(document.getElementById('fiP').value || 0);
+  const R = parseFloat(document.getElementById('fiR').value || 0);
+  const T = parseFloat(document.getElementById('fiT').value || 0);
+  const SI = (P * R * T) / 100;
+  document.getElementById('fiResult').innerHTML = `Simple Interest = <strong>${formatMoney(SI)}</strong> <br/>Amount = <strong>${formatMoney(P + SI)}</strong>`;
+}
+function calcCompoundInterest(){
+  const P = parseFloat(document.getElementById('fiP').value || 0);
+  const R = parseFloat(document.getElementById('fiR').value || 0) / 100;
+  const T = parseFloat(document.getElementById('fiT').value || 0);
+  // assume annual compounding
+  const A = P * Math.pow((1+R), T);
+  document.getElementById('fiResult').innerHTML = `Amount after ${T} years = <strong>${formatMoney(A)}</strong> <br/>Interest = <strong>${formatMoney(A - P)}</strong>`;
+}
+function calcLoanPayment(){
+  const P = parseFloat(document.getElementById('fiP').value || 0);
+  const R = parseFloat(document.getElementById('fiR').value || 0) / 100 / 12; // monthly rate
+  const years = parseFloat(document.getElementById('fiT').value || 0);
+  const n = years * 12;
+  const monthly = (R === 0) ? (P / n) : (P * R * Math.pow(1+R, n) / (Math.pow(1+R, n) - 1));
+  document.getElementById('fiResult').innerHTML = `Monthly payment = <strong>${formatMoney(monthly)}</strong> <br/>Total paid = <strong>${formatMoney(monthly * n)}</strong>`;
+}
+function formatMoney(x){
+  return Number(x).toLocaleString(undefined, {maximumFractionDigits:2, minimumFractionDigits:2});
+}
+
+/* ---------- Educational steps (simple) ---------- */
+function showEducationalSteps(expression, result){
+  const el = document.getElementById('eduSteps');
+  if(!el) return;
+  // Very simple token-based step generator for + - * / and parentheses:
+  try{
+    const tokens = expression;
+    // we will just show the input, the sanitized expression, and the final result with a brief note
+    el.innerHTML = `<strong>Expression:</strong> ${escapeHtml(expression)}<br/><strong>Sanitized:</strong> ${escapeHtml(sanitizeExpression(expression))}<br/><strong>Result:</strong> ${escapeHtml(String(result))}`;
+  } catch(e){
+    el.innerHTML = `Cannot show steps: ${escapeHtml(e.message)}`;
+  }
+}
+
+/* ---------- Programmer conversions ---------- */
+function convertBase(base){
+  // take the current output (or expr) as number
+  let inputStr = expr || outputEl.textContent || '0';
+  try{
+    let dec;
+    // allow hex 0x and binary 0b notations
+    if(/^0x/i.test(inputStr)) dec = parseInt(inputStr,16);
+    else if(/^0b/i.test(inputStr)) dec = parseInt(inputStr,2);
+    else if(/^0o/i.test(inputStr)) dec = parseInt(inputStr,8);
+    else {
+      // fallback decimal parse
+      dec = parseInt(inputStr, 10);
+      if(Number.isNaN(dec)) throw new Error('Not a valid integer');
+    }
+    let out;
+    if(base==='bin') out = dec.toString(2);
+    else if(base==='oct') out = dec.toString(8);
+    else if(base==='dec') out = dec.toString(10);
+    else if(base==='hex') out = dec.toString(16).toUpperCase();
+    else out = String(dec);
+    const p = document.getElementById('progBases');
+    if(p) p.innerHTML = `<div><strong>DEC:</strong> ${dec}</div><div><strong>HEX:</strong> ${dec.toString(16).toUpperCase()}</div><div><strong>BIN:</strong> ${dec.toString(2)}</div><div><strong>OCT:</strong> ${dec.toString(8)}</div>`;
+    pushHistory(inputStr, out);
+    renderOutput(out);
+    expr = out;
+    renderExpr();
+  } catch(e){
+    alert('Conversion error: ' + e.message);
+  }
+}
+
+/* ---------- Keyboard support ---------- */
+window.addEventListener('keydown', (ev)=>{
+  const k = ev.key;
+  if(k === 'Enter' || k === '='){ onButtonPress('='); ev.preventDefault(); return; }
+  if(k === 'Backspace'){ ev.preventDefault(); expr=expr.slice(0,-1); renderExpr(); return; }
+  if(k === 'Escape'){ clearAll(true); return; }
+  // allow numbers and operators and letters
+  if(/^[0-9+\-*/^().,]$/.test(k)){ expr += k; renderExpr(); }
+  // allow letters for functions
+  if(/^[a-zA-Z]$/.test(k)){ expr += k; renderExpr(); }
+});
+
+/* ---------- Utility functions ---------- */
+function clearAll(full=true){
+  expr = '';
+  renderExpr();
+  renderOutput('0');
+  if(full) { /* keep history */ }
+}
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- Init ---------- */
+setMode(currentMode);
+renderOutput('0');
+
+/* ---------- Example: pre-fill with helpful sample to test scientific ---------- */
+(function seedExamples(){
+  // none by default; user can start typing
+})();
+/* THEME SWITCH */
+document.getElementById("themeSelect").onchange = e => {
+    const box = document.getElementById("calc-box");
+    box.className = "calculator-container " + e.target.value;
+};
+</script>
+</body>
+</html>
